@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚡ Kick Miner Go — Minerador Nativo Ultraleve de Pontos de Canal</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🟢</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07090e;
+      --card-bg: rgba(13, 20, 31, 0.85);
+      --card-border: rgba(83, 252, 24, 0.18);
+      --accent: #53fc18;
+      --accent-glow: rgba(83, 252, 24, 0.35);
+      --text: #f3f4f6;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --card-dark: #0a0f17;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      background-image:
+        radial-gradient(circle at 15% 15%, rgba(83, 252, 24, 0.05) 0%, transparent 45%),
+        radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.04) 0%, transparent 50%),
+        linear-gradient(to bottom, #07090e, #0a111a);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      padding: 32px 20px;
+      line-height: 1.6;
+    }
+    .container { max-width: 1080px; margin: 0 auto; }
+    .hero {
+      text-align: center;
+      padding: 48px 24px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      margin-bottom: 32px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 20px 40px -15px rgba(0,0,0,0.7);
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px; border-radius: 999px; font-size: 0.78rem; font-weight: 700;
+      background: rgba(83, 252, 24, 0.12); border: 1px solid var(--accent);
+      color: var(--accent); font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-size: 2.5rem; font-weight: 800; letter-spacing: -0.03em;
+      margin-bottom: 12px;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      font-size: 1.05rem; color: var(--text-muted); max-width: 680px; margin: 0 auto 28px;
+    }
+    .hero-buttons {
+      display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;
+    }
+    .btn {
+      padding: 12px 24px; border-radius: 10px; font-weight: 700; font-size: 0.9rem;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--accent); color: #040904;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .btn-primary:hover {
+      background: #44dd0f; transform: translateY(-2px);
+    }
+    .btn-secondary {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      color: var(--text);
+    }
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.12); border-color: var(--accent);
+    }
+    .metrics-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 16px; margin-bottom: 32px;
+    }
+    .metric-card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 16px; padding: 22px; text-align: center;
+    }
+    .metric-num {
+      font-size: 2.2rem; font-weight: 800; font-family: 'JetBrains Mono', monospace;
+      color: var(--accent); margin-bottom: 4px;
+    }
+    .metric-label { font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .section {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 20px; padding: 32px; margin-bottom: 32px;
+    }
+    .section-title {
+      font-size: 1.4rem; font-weight: 800; margin-bottom: 20px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .table-container { overflow-x: auto; margin-top: 16px; }
+    table {
+      width: 100%; border-collapse: collapse; font-size: 0.9rem;
+    }
+    th, td {
+      padding: 12px 16px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    th { color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; }
+    td.win { color: var(--accent); font-weight: 700; }
+    pre {
+      background: #040608; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px; padding: 18px; font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem; color: #a1a1aa; overflow-x: auto; margin-top: 14px;
+    }
+    code { font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+    .step-list { display: flex; flex-direction: column; gap: 16px; }
+    .step-item {
+      display: flex; gap: 16px; align-items: flex-start;
+      background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px; padding: 16px;
+    }
+    .step-num {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(83, 252, 24, 0.2); border: 1px solid var(--accent);
+      color: var(--accent); font-weight: 800; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-family: 'JetBrains Mono', monospace;
+    }
+    .footer {
+      text-align: center; color: var(--text-dim); font-size: 0.82rem; margin-top: 48px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <div class="hero-badge">⚡ NATIVE GO ENGINE • ZERO BROWSERS</div>
+      <h1>Kick Miner <span>Go</span></h1>
+      <p>
+        Minerador autônomo e de alta performance de <strong>Pontos de Canal da Kick</strong> desenvolvido em Go.
+        Farma pontos e computa presença 24/7 sem abrir navegadores, consumindo apenas <strong>~2 MB de RAM</strong>.
+      </p>
+      <div class="hero-buttons">
+        <a href="https://github.com/kbelludoo/kick-miner-go" class="btn btn-primary" target="_blank">
+          📦 Ver Código no GitHub ↗
+        </a>
+        <a href="#tutorial" class="btn btn-secondary">
+          📖 Guia de Instalação
+        </a>
+      </div>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-num">~2 MB</div>
+        <div class="metric-label">Consumo de RAM</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-num">0%</div>
+        <div class="metric-label">Download de Vídeo</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-num">+10 pts</div>
+        <div class="metric-label">A cada 5 minutos</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-num">24/7</div>
+        <div class="metric-label">Reconexão Contínua</div>
+      </div>
+    </div>
+
+    <!-- COMPARATIVO -->
+    <div class="section">
+      <div class="section-title">
+        <span>⚔️</span> Por que Go vs. Python & Docker?
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.92rem;">
+        Mineradores tradicionais em Python necessitam de máquina virtual, bibliotecas pesadas de bypass (`curl_cffi`) e containers Docker que gastam mais de 70 MB de RAM. O Kick Miner Go compila para um único executável estático que roda direto na VPS ou Windows.
+      </p>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Característica</th>
+              <th>Python Miner / Docker</th>
+              <th>Kick Miner Go (Nativo)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Consumo de Memória</strong></td>
+              <td>45 MB - 90 MB</td>
+              <td class="win">~1.8 MB - 2.5 MB (95% menor)</td>
+            </tr>
+            <tr>
+              <td><strong>Dependências</strong></td>
+              <td>Python 3, pip, aiohttp, docker</td>
+              <td class="win">Zero (único executável)</td>
+            </tr>
+            <tr>
+              <td><strong>Tráfego de Rede</strong></td>
+              <td>Apenas JSON WebSockets</td>
+              <td class="win">Apenas JSON WebSockets (KB/hora)</td>
+            </tr>
+            <tr>
+              <td><strong>Web Dashboard</strong></td>
+              <td>Sim (via aiohttp)</td>
+              <td class="win">Sim (embutido na porta 3007)</td>
+            </tr>
+            <tr>
+              <td><strong>Multi-Contas</strong></td>
+              <td>Sim</td>
+              <td class="win">Sim (Goroutines leves)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TUTORIAL -->
+    <div class="section" id="tutorial">
+      <div class="section-title">
+        <span>🚀</span> Como Configurar e Rodar
+      </div>
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div>
+            <strong>Capture seu Bearer Token da Kick</strong>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
+              Acesse <a href="https://kick.com" target="_blank" style="color: var(--accent);">kick.com</a>, abra o <code>F12</code> (Inspecionar) > aba <strong>Rede (Network)</strong>. Filtre por <code>api</code> ou <code>viewer</code> e copie o cabeçalho <code>Authorization: Bearer seu_token</code>.
+            </p>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div>
+            <strong>Configure o <code>config.json</code></strong>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
+              Copie o <code>config.example.json</code> para <code>config.json</code> e adicione o seu token e os streamers desejados:
+            </p>
+            <pre>{
+  "accounts": [
+    {
+      "username": "SeuUsuario",
+      "bearerToken": "SEU_USER_ID|SEU_TOKEN_AQUI",
+      "streamers": ["tftoddy", "faasii", "axtlol", "xdaren_"],
+      "maxConcurrentStreams": 2
+    }
+  ]
+}</pre>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div>
+            <strong>Execute o Minerador</strong>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
+              No Windows, dê duplo clique em <code>iniciar.bat</code> ou rode <code>go run .</code>. Para VPS Linux, basta rodar o binário compilado <code>./kick-miner-linux</code>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>Desenvolvido com ⚡ em Go por <a href="https://github.com/kbelludoo" style="color: var(--accent); text-decoration: none;">kbelludoo</a>. Projeto independente para fins de automação de pontos de canal.</p>
+    </div>
+  </div>
+</body>
+</html>

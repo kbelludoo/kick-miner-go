@@ -1,0 +1,17 @@
+{
+  "accounts": [
+    {
+      "username": "seu_usuario_kick",
+      "bearerToken": "seu_bearer_token_kick_aqui",
+      "streamers": ["tftoddy", "faasii", "axtlol", "xdaren_", "cogu", "matta"],
+      "maxConcurrentStreams": 2
+    }
+  ],
+  "settings": {
+    "checkIntervalSeconds": 45,
+    "pingIntervalSeconds": 30,
+    "trackingIntervalSeconds": 10,
+    "pointsLogIntervalMinutes": 5,
+    "webDashboardPort": 3007
+  }
+}

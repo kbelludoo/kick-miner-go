@@ -1,0 +1,23 @@
+# Binários compilados
+*.exe
+kick-miner
+kick-miner-linux
+*.dll
+*.so
+*.dylib
+
+# Credenciais e configurações locais com tokens privados (NUNCA SUBIR)
+config.json
+accounts.json
+*.key
+*.pem
+
+# Logs e temporários
+*.log
+*.tmp
+tmp/
+temp/
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db

@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  kick-miner:
+    build: .
+    container_name: kick-miner-go
+    restart: unless-stopped
+    volumes:
+      - ./config.json:/app/config.json:ro
+    ports:
+      - "3007:3007"
+    environment:
+      - TZ=America/Sao_Paulo
