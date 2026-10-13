@@ -3,274 +3,682 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>⚡ Kick Miner Go — Minerador Nativo Ultraleve de Pontos de Canal</title>
+  <title>🟢 Kick Miner Go — Guia</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🟢</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    
     :root {
       --bg: #07090e;
-      --card-bg: rgba(13, 20, 31, 0.85);
-      --card-border: rgba(83, 252, 24, 0.18);
-      --accent: #53fc18;
-      --accent-glow: rgba(83, 252, 24, 0.35);
-      --text: #f3f4f6;
+      --card-bg: rgba(15, 23, 42, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover: rgba(255, 255, 255, 0.14);
+      --accent: #00f0ff;
+      --accent-glow: rgba(0, 240, 255, 0.25);
+      --green: #10b981;
+      --green-glow: rgba(16, 185, 129, 0.25);
+      --gold: #f59e0b;
+      --gold-glow: rgba(245, 158, 11, 0.25);
+      --purple: #a855f7;
+      --cyan: #06b6d4;
+      --red: #ef4444;
+      --text: #f8fafc;
       --text-muted: #94a3b8;
       --text-dim: #64748b;
-      --card-dark: #0a0f17;
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: var(--bg);
-      background-image:
-        radial-gradient(circle at 15% 15%, rgba(83, 252, 24, 0.05) 0%, transparent 45%),
-        radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.04) 0%, transparent 50%),
-        linear-gradient(to bottom, #07090e, #0a111a);
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(0, 240, 255, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 10%, rgba(168, 85, 247, 0.06) 0%, transparent 45%),
+        radial-gradient(circle at 50% 80%, rgba(16, 185, 129, 0.04) 0%, transparent 50%),
+        linear-gradient(to bottom, #07090e, #0a0e1a);
       color: var(--text);
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
       min-height: 100vh;
-      padding: 32px 20px;
-      line-height: 1.6;
+      padding: 24px;
+      line-height: 1.5;
     }
-    .container { max-width: 1080px; margin: 0 auto; }
-    .hero {
-      text-align: center;
-      padding: 48px 24px;
+
+    .container {
+      max-width: 1360px;
+      margin: 0 auto;
+    }
+
+    /* HEADER */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 22px 28px;
       background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 24px;
-      margin-bottom: 32px;
       backdrop-filter: blur(16px);
-      box-shadow: 0 20px 40px -15px rgba(0,0,0,0.7);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 35px -10px rgba(0, 0, 0, 0.6);
     }
-    .hero-badge {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 6px 16px; border-radius: 999px; font-size: 0.78rem; font-weight: 700;
-      background: rgba(83, 252, 24, 0.12); border: 1px solid var(--accent);
-      color: var(--accent); font-family: 'JetBrains Mono', monospace;
-      margin-bottom: 20px;
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 18px;
     }
-    .hero h1 {
-      font-size: 2.5rem; font-weight: 800; letter-spacing: -0.03em;
-      margin-bottom: 12px;
-    }
-    .hero h1 span { color: var(--accent); }
-    .hero p {
-      font-size: 1.05rem; color: var(--text-muted); max-width: 680px; margin: 0 auto 28px;
-    }
-    .hero-buttons {
-      display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;
-    }
-    .btn {
-      padding: 12px 24px; border-radius: 10px; font-weight: 700; font-size: 0.9rem;
-      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
-      transition: all 0.2s;
-    }
-    .btn-primary {
-      background: var(--accent); color: #040904;
+
+    .logo-badge {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(168, 85, 247, 0.3));
+      border: 1px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.7rem;
       box-shadow: 0 0 20px var(--accent-glow);
     }
-    .btn-primary:hover {
-      background: #44dd0f; transform: translateY(-2px);
+
+    .header-title h1 {
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #ffffff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
-    .btn-secondary {
-      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+
+    .header-title p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 16px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid var(--green);
+      color: var(--green);
+      box-shadow: 0 0 14px var(--green-glow);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.9); opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1.15); opacity: 0.8; box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.9); opacity: 1; }
+    }
+
+    .btn-action {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
       color: var(--text);
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
-    .btn-secondary:hover {
-      background: rgba(255,255,255,0.12); border-color: var(--accent);
+    .btn-action:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--accent);
+      color: var(--accent);
     }
-    .metrics-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-      gap: 16px; margin-bottom: 32px;
+
+    /* STATS HERO */
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
     }
-    .metric-card {
-      background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 16px; padding: 22px; text-align: center;
+
+    .hero-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s ease, border-color 0.2s ease;
     }
-    .metric-num {
-      font-size: 2.2rem; font-weight: 800; font-family: 'JetBrains Mono', monospace;
-      color: var(--accent); margin-bottom: 4px;
+    .hero-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--card-hover);
     }
-    .metric-label { font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .section {
-      background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 20px; padding: 32px; margin-bottom: 32px;
+
+    .hero-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
     }
+    .hero-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .hero-icon {
+      font-size: 1.25rem;
+    }
+
+    .hero-val {
+      font-size: 1.8rem;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: -0.02em;
+    }
+    .val-accent { color: var(--accent); text-shadow: 0 0 15px var(--accent-glow); }
+    .val-gold { color: var(--gold); text-shadow: 0 0 15px var(--gold-glow); }
+    .val-green { color: var(--green); text-shadow: 0 0 15px var(--green-glow); }
+    .val-purple { color: var(--purple); }
+
+    .hero-sub {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-top: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* PARTY FORMATION BANNER */
+    .party-banner {
+      background: linear-gradient(135deg, rgba(16, 24, 40, 0.9), rgba(15, 23, 42, 0.9));
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      border-radius: 18px;
+      padding: 22px 28px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .party-banner-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .party-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .party-tag {
+      background: rgba(0, 240, 255, 0.12);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .party-slots {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+
+    .party-slot-card {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    .party-slot-card.leader {
+      border-color: rgba(245, 158, 11, 0.4);
+      background: linear-gradient(90deg, rgba(245, 158, 11, 0.08), rgba(0, 0, 0, 0.35));
+    }
+
+    .slot-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      flex-shrink: 0;
+    }
+    .slot-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .slot-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .slot-role {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .slot-badge {
+      font-size: 0.68rem;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+    .badge-leader { background: rgba(245, 158, 11, 0.2); color: var(--gold); border: 1px solid var(--gold); }
+    .badge-healer { background: rgba(16, 185, 129, 0.2); color: var(--green); border: 1px solid var(--green); }
+    .badge-tank { background: rgba(6, 182, 212, 0.2); color: var(--cyan); border: 1px solid var(--cyan); }
+    .badge-dps { background: rgba(168, 85, 247, 0.2); color: var(--purple); border: 1px solid var(--purple); }
+
+    /* ACCOUNTS GRID */
     .section-title {
-      font-size: 1.4rem; font-weight: 800; margin-bottom: 20px;
-      display: flex; align-items: center; gap: 10px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      color: #fff;
     }
-    .table-container { overflow-x: auto; margin-top: 16px; }
-    table {
-      width: 100%; border-collapse: collapse; font-size: 0.9rem;
+
+    .accounts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
     }
-    th, td {
-      padding: 12px 16px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08);
+
+    .acc-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+      position: relative;
     }
-    th { color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; }
+    .acc-card:hover {
+      border-color: var(--card-hover);
+      box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .acc-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .acc-title-group h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .acc-vocation-tag {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 3px;
+    }
+
+    .badge-online {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--green);
+      color: var(--green);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* BARS */
+    .bar-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .bar-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 4px;
+    }
+    .bar-container {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+    .fill-hp { background: linear-gradient(90deg, #ef4444, #f87171); }
+    .fill-mana { background: linear-gradient(90deg, #06b6d4, #38bdf8); }
+
+    /* STATS TABLE IN CARD */
+    .acc-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      margin-bottom: 16px;
+    }
+    .acc-stat-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .acc-stat-label {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .acc-stat-val {
+      font-size: 0.9rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 2px;
+    }
+
+    /* CONSOLE LOG BOX */
+    .acc-terminal {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      height: 72px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .acc-terminal::-webkit-scrollbar {
+      width: 4px;
+    }
+    .acc-terminal::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 2px;
+    }
+    .terminal-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+    .terminal-line::before {
+      content: '›';
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    /* FOOTER */
+    .footer {
+      border-top: 1px solid var(--card-border);
+      padding-top: 20px;
+      margin-top: 10px;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  
+    .live-badge.offline {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: var(--red);
+      color: var(--red);
+      box-shadow: none;
+    }
+    .live-badge.offline .pulse-dot {
+      background: var(--red);
+      animation: none;
+    }
+    .badge-offline, .badge-idle {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .badge-offline {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid var(--red);
+      color: var(--red);
+    }
+    .badge-idle {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid var(--gold);
+      color: var(--gold);
+    }
+    .fill-xp { background: linear-gradient(90deg, #a855f7, #c084fc); }
+    .fill-stam { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .fill-bestiary { background: linear-gradient(90deg, #7c3aed, #a855f7); }
+    .guide-block {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 22px 28px;
+      margin-bottom: 24px;
+    }
+    .guide-block p { color: var(--text-muted); font-size: 0.92rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 14px; }
+    th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    th { color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; }
     td.win { color: var(--accent); font-weight: 700; }
-    pre {
-      background: #040608; border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 12px; padding: 18px; font-family: 'JetBrains Mono', monospace;
-      font-size: 0.85rem; color: #a1a1aa; overflow-x: auto; margin-top: 14px;
+    pre, .code-box {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      overflow-x: auto;
+      margin-top: 10px;
+      white-space: pre-wrap;
     }
     code { font-family: 'JetBrains Mono', monospace; color: var(--accent); }
-    .step-list { display: flex; flex-direction: column; gap: 16px; }
-    .step-item {
-      display: flex; gap: 16px; align-items: flex-start;
-      background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 12px; padding: 16px;
-    }
+    .step-list { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; }
+    .step-item { display: flex; gap: 14px; align-items: flex-start; }
     .step-num {
-      width: 32px; height: 32px; border-radius: 50%;
-      background: rgba(83, 252, 24, 0.2); border: 1px solid var(--accent);
-      color: var(--accent); font-weight: 800; display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; font-family: 'JetBrains Mono', monospace;
+      width: 32px; height: 32px; border-radius: 10px;
+      background: rgba(0, 240, 255, 0.12);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      flex-shrink: 0;
     }
-    .footer {
-      text-align: center; color: var(--text-dim); font-size: 0.82rem; margin-top: 48px;
+    .channels-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
     }
+    .acc-terminal.tall { height: 220px; }
+    .mini-note { font-size: 0.75rem; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="hero">
-      <div class="hero-badge">⚡ NATIVE GO ENGINE • ZERO BROWSERS</div>
-      <h1>Kick Miner <span>Go</span></h1>
-      <p>
-        Minerador autônomo e de alta performance de <strong>Pontos de Canal da Kick</strong> desenvolvido em Go.
-        Farma pontos e computa presença 24/7 sem abrir navegadores, consumindo apenas <strong>~2 MB de RAM</strong>.
-      </p>
-      <div class="hero-buttons">
-        <a href="https://github.com/kbelludoo/kick-miner-go" class="btn btn-primary" target="_blank">
-          📦 Ver Código no GitHub ↗
-        </a>
-        <a href="#tutorial" class="btn btn-secondary">
-          📖 Guia de Instalação
-        </a>
+    <header class="header">
+      <div class="header-left">
+        <div class="logo-badge">🟢</div>
+        <div class="header-title">
+          <h1>Kick Miner Go</h1>
+          <p>
+            <span>Guia público</span>
+            <span>•</span>
+            <span style="color: var(--accent);">Zero vídeo</span>
+            <span>•</span>
+            <span>Sem controles ao vivo</span>
+          </p>
+        </div>
       </div>
-    </div>
+      <div class="header-right">
+        <div class="live-badge">
+          <div class="pulse-dot"></div>
+          <span>GUIA</span>
+        </div>
+        <a class="btn-action" href="https://github.com/kbelludoo/kick-miner-go" target="_blank" rel="noopener">Ver código ↗</a>
+      </div>
+    </header>
 
-    <div class="metrics-grid">
-      <div class="metric-card">
-        <div class="metric-num">~2 MB</div>
-        <div class="metric-label">Consumo de RAM</div>
+    <section class="hero-grid">
+      <div class="hero-card">
+        <div class="hero-card-header"><span class="hero-label">RAM</span><span class="hero-icon">🧠</span></div>
+        <div class="hero-val val-purple">~2 MB</div>
+        <div class="hero-sub">Executável nativo em Go</div>
       </div>
-      <div class="metric-card">
-        <div class="metric-num">0%</div>
-        <div class="metric-label">Download de Vídeo</div>
+      <div class="hero-card">
+        <div class="hero-card-header"><span class="hero-label">Vídeo</span><span class="hero-icon">📡</span></div>
+        <div class="hero-val val-accent">0%</div>
+        <div class="hero-sub">Sem download de vídeo</div>
       </div>
-      <div class="metric-card">
-        <div class="metric-num">+10 pts</div>
-        <div class="metric-label">A cada 5 minutos</div>
+      <div class="hero-card">
+        <div class="hero-card-header"><span class="hero-label">Contas</span><span class="hero-icon">👥</span></div>
+        <div class="hero-val val-green">Multi</div>
+        <div class="hero-sub">Várias contas em goroutines</div>
       </div>
-      <div class="metric-card">
-        <div class="metric-num">24/7</div>
-        <div class="metric-label">Reconexão Contínua</div>
+      <div class="hero-card">
+        <div class="hero-card-header"><span class="hero-label">Presença</span><span class="hero-icon">⏱️</span></div>
+        <div class="hero-val val-gold">24/7</div>
+        <div class="hero-sub">Reconexão contínua</div>
       </div>
-    </div>
+    </section>
 
-    <!-- COMPARATIVO -->
-    <div class="section">
-      <div class="section-title">
-        <span>⚔️</span> Por que Go vs. Python & Docker?
-      </div>
-      <p style="color: var(--text-muted); font-size: 0.92rem;">
-        Mineradores tradicionais em Python necessitam de máquina virtual, bibliotecas pesadas de bypass (`curl_cffi`) e containers Docker que gastam mais de 70 MB de RAM. O Kick Miner Go compila para um único executável estático que roda direto na VPS ou Windows.
-      </p>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Característica</th>
-              <th>Python Miner / Docker</th>
-              <th>Kick Miner Go (Nativo)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>Consumo de Memória</strong></td>
-              <td>45 MB - 90 MB</td>
-              <td class="win">~1.8 MB - 2.5 MB (95% menor)</td>
-            </tr>
-            <tr>
-              <td><strong>Dependências</strong></td>
-              <td>Python 3, pip, aiohttp, docker</td>
-              <td class="win">Zero (único executável)</td>
-            </tr>
-            <tr>
-              <td><strong>Tráfego de Rede</strong></td>
-              <td>Apenas JSON WebSockets</td>
-              <td class="win">Apenas JSON WebSockets (KB/hora)</td>
-            </tr>
-            <tr>
-              <td><strong>Web Dashboard</strong></td>
-              <td>Sim (via aiohttp)</td>
-              <td class="win">Sim (embutido na porta 3007)</td>
-            </tr>
-            <tr>
-              <td><strong>Multi-Contas</strong></td>
-              <td>Sim</td>
-              <td class="win">Sim (Goroutines leves)</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <section class="guide-block">
+      <div class="section-title"><span>⚔️</span> Por que Go</div>
+      <p>Mineradores em Python carregam runtime, bibliotecas e às vezes um container. O Kick Miner Go compila para um executável estático que roda na VPS ou no Windows.</p>
+      <table>
+        <thead>
+          <tr><th>Característica</th><th>Python / Docker</th><th>Kick Miner Go</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Memória</td><td>45 MB – 90 MB</td><td class="win">~1.8 MB – 2.5 MB</td></tr>
+          <tr><td>Dependências</td><td>Python, pip, bibliotecas</td><td class="win">Nenhuma (um executável)</td></tr>
+          <tr><td>Rede</td><td>JSON / WebSocket</td><td class="win">JSON / WebSocket, sem vídeo</td></tr>
+          <tr><td>Multi-conta</td><td>Sim</td><td class="win">Sim, goroutines leves</td></tr>
+        </tbody>
+      </table>
+    </section>
 
-    <!-- TUTORIAL -->
-    <div class="section" id="tutorial">
-      <div class="section-title">
-        <span>🚀</span> Como Configurar e Rodar
-      </div>
+    <section class="guide-block" id="tutorial">
+      <div class="section-title"><span>🚀</span> Como configurar</div>
       <div class="step-list">
         <div class="step-item">
           <div class="step-num">1</div>
           <div>
-            <strong>Capture seu Bearer Token da Kick</strong>
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
-              Acesse <a href="https://kick.com" target="_blank" style="color: var(--accent);">kick.com</a>, abra o <code>F12</code> (Inspecionar) > aba <strong>Rede (Network)</strong>. Filtre por <code>api</code> ou <code>viewer</code> e copie o cabeçalho <code>Authorization: Bearer seu_token</code>.
-            </p>
+            <strong>Copie o token Bearer da Kick</strong>
+            <p>No site da Kick, abra as ferramentas de rede do navegador e copie o cabeçalho Authorization. Não cole um token real nesta página.</p>
           </div>
         </div>
-
         <div class="step-item">
           <div class="step-num">2</div>
           <div>
-            <strong>Configure o <code>config.json</code></strong>
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
-              Copie o <code>config.example.json</code> para <code>config.json</code> e adicione o seu token e os streamers desejados:
-            </p>
+            <strong>Preencha o config.json local</strong>
+            <p>Use o exemplo abaixo só como formato. O token mostrado é um marcador, nunca uma credencial.</p>
             <pre>{
   "accounts": [
     {
       "username": "SeuUsuario",
       "bearerToken": "SEU_USER_ID|SEU_TOKEN_AQUI",
-      "streamers": ["tftoddy", "faasii", "axtlol", "xdaren_"],
+      "streamers": ["canal-exemplo"],
       "maxConcurrentStreams": 2
     }
   ]
 }</pre>
           </div>
         </div>
-
         <div class="step-item">
           <div class="step-num">3</div>
           <div>
-            <strong>Execute o Minerador</strong>
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
-              No Windows, dê duplo clique em <code>iniciar.bat</code> ou rode <code>go run .</code>. Para VPS Linux, basta rodar o binário compilado <code>./kick-miner-linux</code>.
-            </p>
+            <strong>Rode o minerador na sua máquina</strong>
+            <p>No Windows, use <code>iniciar.bat</code> ou <code>go run .</code>. Na VPS Linux, rode o binário compilado. Esta página não envia comandos.</p>
           </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="footer">
-      <p>Desenvolvido com ⚡ em Go por <a href="https://github.com/kbelludoo" style="color: var(--accent); text-decoration: none;">kbelludoo</a>. Projeto independente para fins de automação de pontos de canal.</p>
-    </div>
+    <footer class="footer">
+      <p>Kick Miner Go • página informativa, sem telemetria de conta e sem controles</p>
+      <p style="margin-top: 6px;"><a href="https://github.com/kbelludoo/kick-miner-go" target="_blank" rel="noopener">Repositório GitHub</a></p>
+    </footer>
   </div>
 </body>
 </html>
