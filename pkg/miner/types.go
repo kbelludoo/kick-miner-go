@@ -12,6 +12,7 @@ type StreamerStatus struct {
 	Streamer  string `json:"streamer"`
 	IsLive    bool   `json:"isLive"`
 	Watching  bool   `json:"watching"`
+	AutoFill  bool   `json:"autoFill"`
 	Points    int    `json:"points"`
 	WatchTime string `json:"watchTime"`
 	LastError string `json:"lastError,omitempty"`

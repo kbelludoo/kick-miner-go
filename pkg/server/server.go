@@ -123,6 +123,7 @@ const htmlDashboard = `<!DOCTYPE html>
     .stream-name { font-weight: 700; font-size: 0.95rem; }
     .stream-status { font-size: 0.72rem; padding: 3px 8px; border-radius: 6px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
     .status-watching { background: rgba(83, 252, 24, 0.2); color: var(--accent); border: 1px solid var(--accent); }
+    .status-live { background: rgba(255, 160, 0, 0.15); color: #ffb300; border: 1px solid #ffb300; }
     .status-offline { background: rgba(255,255,255,0.05); color: var(--text-dim); }
     .stream-points { font-size: 1.1rem; font-weight: 700; color: #fff; font-family: 'JetBrains Mono', monospace; }
     .log-box {
@@ -203,21 +204,36 @@ const htmlDashboard = `<!DOCTYPE html>
 
         const accKeys = Object.keys(data.accounts || {});
         if (accKeys.length > 0) {
-          const acc = data.accounts[accKeys[0]];
-          document.getElementById('accName').textContent = 'Conta: ' + acc.username;
+          const allNames = accKeys.map(k => data.accounts[k].username).join(', ');
+          document.getElementById('accName').textContent = 'Conta(s): ' + allNames;
 
-          const streamers = acc.streamers || {};
-          const keys = Object.keys(streamers);
-          if (keys.length > 0) {
-            html = keys.map(k => {
-              const s = streamers[k];
+          const allStreamers = [];
+          accKeys.forEach(k => {
+            const acc = data.accounts[k];
+            Object.keys(acc.streamers || {}).forEach(sk => {
+              allStreamers.push(acc.streamers[sk]);
+            });
+          });
+
+          if (allStreamers.length > 0) {
+            html = allStreamers.map(s => {
+              const isWatching = s.watching;
               totalPts += (s.points || 0);
-              const statusText = isWatching ? ('ASSISTINDO • ' + (s.watchTime || '0s')) : (s.isLive ? 'AO VIVO' : 'OFFLINE');
-              const statusClass = isWatching ? 'status-watching' : 'status-offline';
+              let statusText, statusClass;
+              if (isWatching) {
+                statusText = 'ASSISTINDO • ' + (s.watchTime || '0s');
+                statusClass = 'status-watching';
+              } else if (s.isLive) {
+                statusText = 'AO VIVO';
+                statusClass = 'status-live';
+              } else {
+                statusText = 'OFFLINE';
+                statusClass = 'status-offline';
+              }
               const activeClass = isWatching ? 'active' : '';
               return '<div class="stream-item ' + activeClass + '">' +
                 '<div class="stream-head">' +
-                  '<span class="stream-name">' + s.streamer + '</span>' +
+                  '<span class="stream-name">' + s.streamer + (s.autoFill ? ' ⚡' : '') + '</span>' +
                   '<span class="stream-status ' + statusClass + '">' + statusText + '</span>' +
                 '</div>' +
                 '<div class="stream-points">⭐ ' + (s.points || 0) + ' pts</div>' +
@@ -239,7 +255,7 @@ const htmlDashboard = `<!DOCTYPE html>
     }
 
     update();
-    setInterval(update, 3000);
+    setInterval(update, 4000);
   </script>
 </body>
 </html>`

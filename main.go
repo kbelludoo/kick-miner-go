@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/kbelludoo/kick-miner-go/pkg/chatbot"
 	"github.com/kbelludoo/kick-miner-go/pkg/config"
 	"github.com/kbelludoo/kick-miner-go/pkg/miner"
 	"github.com/kbelludoo/kick-miner-go/pkg/server"
@@ -55,6 +56,10 @@ func main() {
 	srv.Start()
 
 	go mgr.Start(ctx)
+
+	// Inicia o Chatbot oficial para a live do canal (envia links periódicos e responde comandos)
+	chatBot := chatbot.NewBot(cfg.Accounts[0].BearerToken, "kbelludoo")
+	go chatBot.Start(ctx)
 
 	// Ticker de console no terminal a cada 5 segundos
 	ticker := time.NewTicker(5 * time.Second)

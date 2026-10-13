@@ -12,6 +12,8 @@
     "pingIntervalSeconds": 30,
     "trackingIntervalSeconds": 10,
     "pointsLogIntervalMinutes": 5,
-    "webDashboardPort": 3007
+    "webDashboardPort": 3007,
+    "autoFillEnabled": true,
+    "autoFillTarget": 12
   }
 }

@@ -21,7 +21,11 @@ type Manager struct {
 	httpCli   *http.Client
 	watchers  map[string]map[string]*StreamWatcher // username -> streamer -> watcher
 	statuses  map[string]*AccountStatus
+	favorites map[string]map[string]bool // username -> streamers configurados nos grupos
+	checking  map[string]bool            // username -> checagem em andamento
 	logs      []string
+
+	discoveryWarnAt time.Time
 	startedAt time.Time
 }
 
@@ -33,24 +37,32 @@ func NewManager(cfg *config.Config) *Manager {
 		},
 		watchers:  make(map[string]map[string]*StreamWatcher),
 		statuses:  make(map[string]*AccountStatus),
-		logs:      make([]string, 0, 50),
+		favorites: make(map[string]map[string]bool),
+		checking:  make(map[string]bool),
+		logs:      make([]string, 0, 100),
 		startedAt: time.Now(),
 	}
 
 	for _, acc := range cfg.Accounts {
 		m.watchers[acc.Username] = make(map[string]*StreamWatcher)
+		favs := make(map[string]bool)
 		st := &AccountStatus{
 			Username:  acc.Username,
 			Streamers: make(map[string]StreamerStatus),
 		}
-		for _, s := range acc.Streamers {
-			clean := strings.ToLower(strings.TrimSpace(s))
-			if clean != "" {
-				st.Streamers[clean] = StreamerStatus{
-					Streamer: clean,
+		// Inicializa status de todos os streamers de todos os grupos
+		for _, group := range acc.GetEffectiveGroups() {
+			for _, s := range group.Streamers {
+				clean := strings.ToLower(strings.TrimSpace(s))
+				if clean != "" {
+					favs[clean] = true
+					st.Streamers[clean] = StreamerStatus{
+						Streamer: clean,
+					}
 				}
 			}
 		}
+		m.favorites[acc.Username] = favs
 		m.statuses[acc.Username] = st
 	}
 
@@ -89,22 +101,59 @@ func (m *Manager) checkAccount(ctx context.Context, acc config.AccountConfig) {
 		return
 	}
 
+	m.mu.Lock()
+	if m.checking[acc.Username] {
+		m.mu.Unlock()
+		return
+	}
+	m.checking[acc.Username] = true
+	m.mu.Unlock()
+	defer func() {
+		m.mu.Lock()
+		delete(m.checking, acc.Username)
+		m.mu.Unlock()
+	}()
+
+	// Libera slots de lives que já terminaram
+	m.pruneOfflineWatchers(acc)
+
+	// Cada grupo roda de forma independente (slots separados)
+	for _, group := range acc.GetEffectiveGroups() {
+		m.checkGroup(ctx, acc, group)
+	}
+
+	// Se AutoFill estiver ativo, completa os slots restantes até o alvo (ex: 12)
+	if m.cfg.Settings.AutoFillEnabled {
+		m.checkAutoFill(ctx, acc)
+	}
+}
+
+// checkGroup gerencia os slots de um grupo de streamers de forma independente.
+func (m *Manager) checkGroup(ctx context.Context, acc config.AccountConfig, group config.StreamerGroup) {
 	m.mu.RLock()
 	activeMap := m.watchers[acc.Username]
+	// Conta apenas watchers que pertencem a ESTE grupo
 	activeCount := 0
-	for _, w := range activeMap {
-		if w.IsAlive() {
+	groupSet := make(map[string]bool, len(group.Streamers))
+	for _, s := range group.Streamers {
+		clean := strings.ToLower(strings.TrimSpace(s))
+		if clean != "" {
+			groupSet[clean] = true
+		}
+	}
+	for streamer, w := range activeMap {
+		if groupSet[streamer] && w.IsAlive() {
 			activeCount++
 		}
 	}
 	m.mu.RUnlock()
 
-	maxStreams := acc.MaxConcurrentStreams
+	maxStreams := group.MaxConcurrent
 	if maxStreams <= 0 {
 		maxStreams = 2
 	}
 
-	for _, streamer := range acc.Streamers {
+	for _, streamer := range group.Streamers {
 		clean := strings.ToLower(strings.TrimSpace(streamer))
 		if clean == "" {
 			continue
@@ -115,15 +164,16 @@ func (m *Manager) checkAccount(ctx context.Context, acc config.AccountConfig) {
 		m.mu.RUnlock()
 
 		if exists && w.IsAlive() {
+			if w.IsAutoFill() {
+				m.promoteToFavorite(acc.Username, w)
+			}
 			continue
 		}
 
-		// Se já atingiu o limite de transmissões simultâneas, para de abrir novas
 		if activeCount >= maxStreams {
 			break
 		}
 
-		// Checa se o canal está ao vivo na Kick
 		info, err := m.GetChannelInfo(acc.BearerToken, clean)
 		if err != nil || info == nil {
 			continue
@@ -141,7 +191,6 @@ func (m *Manager) checkAccount(ctx context.Context, acc config.AccountConfig) {
 			continue
 		}
 
-		// Canal está ao vivo e temos vaga!
 		m.mu.Lock()
 		activeMap = m.watchers[acc.Username]
 		if existing, ok := activeMap[clean]; ok && existing.IsAlive() {
@@ -149,11 +198,15 @@ func (m *Manager) checkAccount(ctx context.Context, acc config.AccountConfig) {
 			continue
 		}
 
-		watcher := NewStreamWatcher(m, acc.Username, acc.BearerToken, clean, info.ChannelID, info.UserID, info.StreamID)
+		evicted := m.evictAutoFillLocked(acc.Username)
+		watcher := NewStreamWatcher(m, acc.Username, acc.BearerToken, clean, info.ChannelID, info.UserID, info.StreamID, false)
 		activeMap[clean] = watcher
 		activeCount++
 		m.mu.Unlock()
 
+		if evicted != "" {
+			m.AddLog(fmt.Sprintf("[%s] 🔁 Favorito '%s' entrou ao vivo: substituindo auto-fill '%s'.", acc.Username, clean, evicted))
+		}
 		go watcher.Run(ctx)
 	}
 }
@@ -253,24 +306,59 @@ func (m *Manager) FetchPoints(token, streamer string) (int, error) {
 	return res.Data.Points, nil
 }
 
-func (m *Manager) updateStreamerWatching(username, streamer string, watching bool) {
+// setWatching atualiza o status apenas se o watcher ainda for o atual do streamer
+// (um watcher antigo encerrando não pode sobrescrever o novo).
+func (m *Manager) setWatching(w *StreamWatcher, watching bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if st, ok := m.statuses[username]; ok {
-		if sStatus, ok2 := st.Streamers[streamer]; ok2 {
-			sStatus.Watching = watching
-			st.Streamers[streamer] = sStatus
-		}
-		// Recalcula ativas
-		active := 0
-		for _, s := range st.Streamers {
-			if s.Watching {
-				active++
-			}
-		}
-		st.ActiveStreams = active
+	if m.watchers[w.username][w.streamer] != w {
+		return
 	}
+	if st, ok := m.statuses[w.username]; ok {
+		if sStatus, ok2 := st.Streamers[w.streamer]; ok2 {
+			sStatus.Watching = watching
+			st.Streamers[w.streamer] = sStatus
+		}
+		recalcLocked(st)
+	}
+}
+
+// watcherEnded remove o watcher finalizado e descarta o status de streamers do auto-fill.
+func (m *Manager) watcherEnded(w *StreamWatcher) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.watchers[w.username][w.streamer] != w {
+		return
+	}
+	delete(m.watchers[w.username], w.streamer)
+
+	st, ok := m.statuses[w.username]
+	if !ok {
+		return
+	}
+	if m.favorites[w.username][w.streamer] {
+		if sStatus, ok2 := st.Streamers[w.streamer]; ok2 {
+			sStatus.Watching = false
+			st.Streamers[w.streamer] = sStatus
+		}
+	} else {
+		delete(st.Streamers, w.streamer)
+	}
+	recalcLocked(st)
+}
+
+func recalcLocked(st *AccountStatus) {
+	active, tot := 0, 0
+	for _, s := range st.Streamers {
+		if s.Watching {
+			active++
+		}
+		tot += s.Points
+	}
+	st.ActiveStreams = active
+	st.TotalPoints = tot
 }
 
 func (m *Manager) updateStreamerPoints(username, streamer string, points int) {
@@ -282,12 +370,7 @@ func (m *Manager) updateStreamerPoints(username, streamer string, points int) {
 			sStatus.Points = points
 			st.Streamers[streamer] = sStatus
 		}
-		// Soma total
-		tot := 0
-		for _, s := range st.Streamers {
-			tot += s.Points
-		}
-		st.TotalPoints = tot
+		recalcLocked(st)
 	}
 }
 
@@ -298,18 +381,19 @@ func (m *Manager) AddLog(msg string) {
 	log.Println(msg)
 	entry := fmt.Sprintf("[%s] %s", time.Now().Format("15:04:05"), msg)
 	m.logs = append(m.logs, entry)
-	if len(m.logs) > 30 {
+	if len(m.logs) > 100 {
 		m.logs = m.logs[1:]
 	}
 }
 
 func (m *Manager) GetTelemetry() GlobalTelemetry {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
+	// ReadMemStats faz stop-the-world; chamar fora do lock para não bloquear writers
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 	ramMb := float64(mem.Alloc) / (1024 * 1024)
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 
 	accCopies := make(map[string]AccountStatus)
 	totalStreams := 0

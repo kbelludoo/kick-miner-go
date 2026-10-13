@@ -24,10 +24,13 @@ type StreamWatcher struct {
 	mu        sync.RWMutex
 	conn      *websocket.Conn
 	alive     bool
+	autoFill  bool
 	startedAt time.Time
+	stop      chan struct{}
+	stopOnce  sync.Once
 }
 
-func NewStreamWatcher(mgr *Manager, username, token, streamer string, chID, uID, sID int64) *StreamWatcher {
+func NewStreamWatcher(mgr *Manager, username, token, streamer string, chID, uID, sID int64, autoFill bool) *StreamWatcher {
 	return &StreamWatcher{
 		manager:   mgr,
 		username:  username,
@@ -37,7 +40,9 @@ func NewStreamWatcher(mgr *Manager, username, token, streamer string, chID, uID,
 		userID:    uID,
 		streamID:  sID,
 		alive:     true,
+		autoFill:  autoFill,
 		startedAt: time.Now(),
+		stop:      make(chan struct{}),
 	}
 }
 
@@ -45,6 +50,19 @@ func (w *StreamWatcher) IsAlive() bool {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 	return w.alive
+}
+
+// IsAutoFill indica se o watcher ocupa um slot genérico (pode ser substituído por um favorito).
+func (w *StreamWatcher) IsAutoFill() bool {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.autoFill
+}
+
+func (w *StreamWatcher) setAutoFill(v bool) {
+	w.mu.Lock()
+	w.autoFill = v
+	w.mu.Unlock()
 }
 
 func (w *StreamWatcher) Duration() time.Duration {
@@ -55,12 +73,14 @@ func (w *StreamWatcher) Close() {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	w.alive = false
+	w.stopOnce.Do(func() { close(w.stop) })
 	if w.conn != nil {
 		_ = w.conn.Close()
 		w.conn = nil
 	}
 }
 
+// Run conecta ao WebSocket e reconecta automaticamente com backoff exponencial.
 func (w *StreamWatcher) Run(ctx context.Context) {
 	defer func() {
 		w.mu.Lock()
@@ -71,15 +91,60 @@ func (w *StreamWatcher) Run(ctx context.Context) {
 		}
 		w.mu.Unlock()
 
-		w.manager.updateStreamerWatching(w.username, w.streamer, false)
+		w.manager.watcherEnded(w)
 		w.manager.AddLog(fmt.Sprintf("[%s] Sessão de visualização na live de '%s' finalizada.", w.username, w.streamer))
 	}()
 
+	backoff := 5 * time.Second
+	const maxBackoff = 120 * time.Second
+
+	for {
+		// Checa se contexto foi cancelado antes de tentar reconectar
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		if !w.IsAlive() {
+			return
+		}
+
+		err := w.runSession(ctx)
+		if err == nil {
+			// Sessão terminou limpa (ctx cancelado)
+			return
+		}
+
+		if !w.IsAlive() {
+			return
+		}
+
+		// Sesão caiu por erro — reconectar com backoff
+		w.manager.setWatching(w, false)
+		w.manager.AddLog(fmt.Sprintf("[%s] ⚠ WebSocket de '%s' caiu: %v. Reconectando em %s...", w.username, w.streamer, err, backoff))
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-w.stop:
+			return
+		case <-time.After(backoff):
+		}
+
+		backoff *= 2
+		if backoff > maxBackoff {
+			backoff = maxBackoff
+		}
+	}
+}
+
+// runSession executa uma única sessão WebSocket. Retorna nil se ctx foi cancelado, erro caso contrário.
+func (w *StreamWatcher) runSession(ctx context.Context) error {
 	// 1. Obter Viewer WebSocket Token
 	wsToken, err := w.fetchViewerToken()
 	if err != nil || wsToken == "" {
-		w.manager.AddLog(fmt.Sprintf("[%s] Erro ao obter token do WebSocket para '%s': %v", w.username, w.streamer, err))
-		return
+		return fmt.Errorf("token WS: %w", err)
 	}
 
 	// 2. Conectar ao WebSocket
@@ -89,10 +154,14 @@ func (w *StreamWatcher) Run(ctx context.Context) {
 	headers.Set("Origin", "https://kick.com")
 
 	dialer := websocket.DefaultDialer
-	conn, _, err := dialer.Dial(wsURL, headers)
+	conn, _, err := dialer.DialContext(ctx, wsURL, headers)
 	if err != nil {
-		w.manager.AddLog(fmt.Sprintf("[%s] Falha ao conectar WS de '%s': %v", w.username, w.streamer, err))
-		return
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			return fmt.Errorf("dial WS: %w", err)
+		}
 	}
 	defer conn.Close()
 
@@ -100,7 +169,7 @@ func (w *StreamWatcher) Run(ctx context.Context) {
 	w.conn = conn
 	w.mu.Unlock()
 
-	w.manager.updateStreamerWatching(w.username, w.streamer, true)
+	w.manager.setWatching(w, true)
 
 	// Consulta e loga saldo inicial de pontos
 	if pts, err := w.manager.FetchPoints(w.token, w.streamer); err == nil {
@@ -134,15 +203,17 @@ func (w *StreamWatcher) Run(ctx context.Context) {
 	pointsTicker := time.NewTicker(pointsInterval)
 	defer pointsTicker.Stop()
 
-	disconnectChan := make(chan struct{}, 1)
+	disconnectChan := make(chan error, 1)
+	sessionDone := make(chan struct{})
+	defer close(sessionDone)
 
-	// Goroutine de envio de tracking contínuo e handshakes periódicos
+	// Goroutine de envio: handshakes periódicos e tracking
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
 				return
-			case <-disconnectChan:
+			case <-sessionDone:
 				return
 			case <-handshakeTicker.C:
 				w.mu.Lock()
@@ -174,6 +245,10 @@ func (w *StreamWatcher) Run(ctx context.Context) {
 					})
 					if err != nil {
 						w.mu.Unlock()
+						select {
+						case disconnectChan <- err:
+						default:
+						}
 						return
 					}
 				}
@@ -188,32 +263,43 @@ func (w *StreamWatcher) Run(ctx context.Context) {
 		}
 	}()
 
-	// Loop de recebimento de mensagens e pong
-	for {
-		_ = conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-		_, msg, err := conn.ReadMessage()
-		if err != nil {
-			select {
-			case disconnectChan <- struct{}{}:
-			default:
+	// Loop de recebimento de mensagens — encerra rápido ao ctx.Done()
+	readErr := make(chan error, 1)
+	go func() {
+		for {
+			_ = conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+			_, msg, err := conn.ReadMessage()
+			if err != nil {
+				readErr <- err
+				return
 			}
-			break
-		}
-		var parsed map[string]any
-		if err := json.Unmarshal(msg, &parsed); err == nil {
-			if parsed["type"] == "ping" {
-				w.mu.Lock()
-				if w.conn != nil {
-					_ = w.conn.WriteJSON(map[string]any{"type": "pong"})
+			var parsed map[string]any
+			if err := json.Unmarshal(msg, &parsed); err == nil {
+				if parsed["type"] == "ping" {
+					w.mu.Lock()
+					if w.conn != nil {
+						_ = w.conn.WriteJSON(map[string]any{"type": "pong"})
+					}
+					w.mu.Unlock()
 				}
-				w.mu.Unlock()
 			}
 		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil
+	case <-w.stop:
+		return nil
+	case err := <-disconnectChan:
+		return err
+	case err := <-readErr:
+		return err
 	}
 }
 
 func (w *StreamWatcher) fetchViewerToken() (string, error) {
-	client := &http.Client{Timeout: 10 * time.Second}
+	// Reusa o httpClient do Manager para aproveitar o pool de conexões TCP
 	req, err := http.NewRequest("GET", "https://websockets.kick.com/viewer/v1/token", nil)
 	if err != nil {
 		return "", err
@@ -228,7 +314,7 @@ func (w *StreamWatcher) fetchViewerToken() (string, error) {
 	req.Header.Set("X-User-Id", fmt.Sprintf("%d", w.userID))
 	req.Header.Set("X-Client-Token", "e1393935a959b4020a4491574f6490129f678acdaa92760471263db43487f823")
 
-	resp, err := client.Do(req)
+	resp, err := w.manager.httpCli.Do(req)
 	if err != nil {
 		return "", err
 	}
