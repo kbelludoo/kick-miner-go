@@ -72,6 +72,11 @@ func NewManager(cfg *config.Config) *Manager {
 func (m *Manager) Start(ctx context.Context) {
 	m.AddLog(fmt.Sprintf("Iniciando Kick Miner Go para %d conta(s)...", len(m.cfg.Accounts)))
 
+	// Resgate automático da recompensa diária (API de gamificação)
+	if m.cfg.Settings.IsDailyClaimEnabled() {
+		go m.runDailyClaims(ctx)
+	}
+
 	// Checagem imediata inicial
 	m.checkAllAccounts(ctx)
 

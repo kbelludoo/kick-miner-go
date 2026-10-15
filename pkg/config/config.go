@@ -56,6 +56,13 @@ type SettingsConfig struct {
 	WebDashboardPort         int  `json:"webDashboardPort"`
 	AutoFillEnabled          bool `json:"autoFillEnabled"`
 	AutoFillTarget           int  `json:"autoFillTarget"`
+	DailyClaimEnabled        *bool `json:"dailyClaimEnabled"`       // padrão: true
+	DailyClaimCheckMinutes   int   `json:"dailyClaimCheckMinutes"`  // padrão: 15
+}
+
+// IsDailyClaimEnabled retorna se o resgate automático de recompensas diárias está ativo.
+func (s SettingsConfig) IsDailyClaimEnabled() bool {
+	return s.DailyClaimEnabled == nil || *s.DailyClaimEnabled
 }
 
 func LoadConfig(filePath string) (*Config, error) {
@@ -90,6 +97,9 @@ func LoadConfig(filePath string) (*Config, error) {
 	}
 	if cfg.Settings.WebDashboardPort <= 0 {
 		cfg.Settings.WebDashboardPort = 3007
+	}
+	if cfg.Settings.DailyClaimCheckMinutes <= 0 {
+		cfg.Settings.DailyClaimCheckMinutes = 15
 	}
 
 	for i := range cfg.Accounts {
