@@ -29,7 +29,7 @@ jobs:
           /usr/bin/time -f 'GO_COLD_SECONDS=%e\nGO_COLD_MAX_RSS_KB=%M' go build -o "$RUNNER_TEMP/kick-miner-go" .
           echo "BENCHMARK_GO_WARM"
           /usr/bin/time -f 'GO_WARM_SECONDS=%e\nGO_WARM_MAX_RSS_KB=%M' go build -o "$RUNNER_TEMP/kick-miner-go" .
-          touch main.go
+          printf '\n// benchmark: Go file modified\n' >> main.go
           echo "BENCHMARK_GO_INCREMENTAL"
           /usr/bin/time -f 'GO_INCREMENTAL_SECONDS=%e\nGO_INCREMENTAL_MAX_RSS_KB=%M' go build -o "$RUNNER_TEMP/kick-miner-go" .
       - name: Rust toolchain details
@@ -55,6 +55,6 @@ jobs:
           /usr/bin/time -f 'RUST_COLD_SECONDS=%e\nRUST_COLD_MAX_RSS_KB=%M' cargo build --release
           echo "BENCHMARK_RUST_WARM"
           /usr/bin/time -f 'RUST_WARM_SECONDS=%e\nRUST_WARM_MAX_RSS_KB=%M' cargo build --release
-          touch src/main.rs
+          printf '\n// benchmark: Rust file modified\n' >> src/main.rs
           echo "BENCHMARK_RUST_INCREMENTAL"
           /usr/bin/time -f 'RUST_INCREMENTAL_SECONDS=%e\nRUST_INCREMENTAL_MAX_RSS_KB=%M' cargo build --release
