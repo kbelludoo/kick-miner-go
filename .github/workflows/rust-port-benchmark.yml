@@ -1,0 +1,60 @@
+name: Go vs Rust compile benchmark
+on:
+  push:
+    branches:
+      - rust-port-benchmark-20261021
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: false
+      - name: Go cold build (cache isolated)
+        shell: bash
+        run: |
+          set -euo pipefail
+          go mod download
+          export GOCACHE="$RUNNER_TEMP/gocache-cold"
+          mkdir -p "$GOCACHE"
+          echo "BENCHMARK_GO_COLD"
+          /usr/bin/time -f 'GO_COLD_SECONDS=%e\nGO_COLD_MAX_RSS_KB=%M' go build -o "$RUNNER_TEMP/kick-miner-go" .
+          echo "BENCHMARK_GO_WARM"
+          /usr/bin/time -f 'GO_WARM_SECONDS=%e\nGO_WARM_MAX_RSS_KB=%M' go build -o "$RUNNER_TEMP/kick-miner-go" .
+          printf '\n// benchmark: Go file modified\n' >> main.go
+          echo "BENCHMARK_GO_INCREMENTAL"
+          /usr/bin/time -f 'GO_INCREMENTAL_SECONDS=%e\nGO_INCREMENTAL_MAX_RSS_KB=%M' go build -o "$RUNNER_TEMP/kick-miner-go" .
+      - name: Rust toolchain details
+        shell: bash
+        run: |
+          rustc --version
+          cargo --version
+      - name: Fetch Rust dependencies
+        shell: bash
+        working-directory: rust-port
+        run: cargo fetch
+      - name: Rust unit tests
+        shell: bash
+        working-directory: rust-port
+        run: cargo test --locked
+      - name: Rust cold, warm, incremental release build
+        shell: bash
+        working-directory: rust-port
+        run: |
+          set -euo pipefail
+          cargo clean
+          echo "BENCHMARK_RUST_COLD"
+          /usr/bin/time -f 'RUST_COLD_SECONDS=%e\nRUST_COLD_MAX_RSS_KB=%M' cargo build --release
+          echo "BENCHMARK_RUST_WARM"
+          /usr/bin/time -f 'RUST_WARM_SECONDS=%e\nRUST_WARM_MAX_RSS_KB=%M' cargo build --release
+          printf '\n// benchmark: Rust file modified\n' >> src/main.rs
+          echo "BENCHMARK_RUST_INCREMENTAL"
+          /usr/bin/time -f 'RUST_INCREMENTAL_SECONDS=%e\nRUST_INCREMENTAL_MAX_RSS_KB=%M' cargo build --release
