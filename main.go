@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/kbelludoo/kick-miner-go/pkg/chatbot"
+	"github.com/kbelludoo/kick-miner-go/pkg/chatter"
 	"github.com/kbelludoo/kick-miner-go/pkg/config"
 	"github.com/kbelludoo/kick-miner-go/pkg/miner"
 	"github.com/kbelludoo/kick-miner-go/pkg/server"
@@ -61,6 +62,11 @@ func main() {
 	chatBot := chatbot.NewBot(cfg.Accounts[0].BearerToken, "kbelludoo")
 	go chatBot.Start(ctx)
 
+	// Inicia os Chatters humanizados se habilitados
+	if cfg.Chatter.Enabled && len(cfg.Accounts) > 0 {
+		startChatters(ctx, cfg)
+	}
+
 	// Ticker de console no terminal a cada 5 segundos
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
@@ -92,6 +98,52 @@ func main() {
 			fmt.Printf("[Ticker] RAM: %.2f MB | Uptime: %s | Transmissões: %d | Pontos: %d | Assistindo: [%s]\n",
 				t.RamMb, t.Uptime, t.TotalStreams, totalPoints, watchDesc)
 		}
+	}
+}
+
+// startChatters inicia um Chatter para cada streamer configurado, usando a primeira conta
+// do grupo "prioridade" (ou a primeira conta disponível).
+func startChatters(ctx context.Context, cfg *config.Config) {
+	if len(cfg.Accounts) == 0 {
+		return
+	}
+
+	acc := cfg.Accounts[0]
+
+	// Determina a lista de streamers do chatter. Prioriza cfg.Chatter.Streamers,
+	// mas cai no grupo "prioridade" da conta se a lista estiver vazia.
+	streamers := cfg.Chatter.Streamers
+	if len(streamers) == 0 {
+		for _, g := range acc.GetEffectiveGroups() {
+			if g.Name == "prioridade" {
+				streamers = g.Streamers
+				break
+			}
+		}
+	}
+
+	if len(streamers) == 0 {
+		log.Println("[Chatter] Nenhum streamer configurado para o chatter, pulando...")
+		return
+	}
+
+	minInterval := time.Duration(cfg.Chatter.MinIntervalMinutes) * time.Minute
+	maxInterval := time.Duration(cfg.Chatter.MaxIntervalMinutes) * time.Minute
+
+	for _, streamer := range streamers {
+		s := streamer // captura para goroutine
+		c := chatter.NewChatter(chatter.ChatterConfig{
+			Token:       acc.BearerToken,
+			Streamer:    s,
+			Username:    acc.Username,
+			MinInterval: minInterval,
+			MaxInterval: maxInterval,
+			LLMAPIKey:   cfg.Chatter.LLMAPIKey,
+			LLMBaseURL:  cfg.Chatter.LLMBaseURL,
+			LLMModel:    cfg.Chatter.LLMModel,
+		})
+		log.Printf("[Chatter] Iniciando chatter para streamer '%s'\n", s)
+		go c.Start(ctx)
 	}
 }
 
