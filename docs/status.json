@@ -1,0 +1,15 @@
+{
+  "uptime": "00:00:00",
+  "ram_mb": 0,
+  "goroutines": 1,
+  "total_streams": 0,
+  "accounts": {
+    "KbElLuDoO": {
+      "username": "KbElLuDoO",
+      "active_streams": 0,
+      "total_points": 0,
+      "streamers": {}
+    }
+  },
+  "logs": ["Bot offline ou sem dados ao vivo."]
+}
